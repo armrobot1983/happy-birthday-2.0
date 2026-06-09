@@ -11,11 +11,16 @@ const ribbonsCtx = ribbonsCanvas.getContext('2d');
 const fireworksCanvas = document.getElementById('fireworks-canvas');
 const fireworksCtx = fireworksCanvas.getContext('2d');
 
+// Logical dimensions (CSS pixels) — shared across all canvas draw functions
+let logicalW = window.innerWidth, logicalH = window.innerHeight;
+
 const bgmAudio = document.getElementById('bgmAudio');
 const audioGojo = document.getElementById('audioGojo');
 const audioXia = document.getElementById('audioXia');
 const wishBtn = document.getElementById('wishBtn');
 const wishRing = document.getElementById('wishRing');
+
+const isMobile = () => window.innerWidth <= 768;
 
 // State
 let currentScene = 0, activeScene = 0, targetY = 0, currentY = 0;
@@ -61,13 +66,29 @@ let musicExpanded = false, bgmPlaying = true;
 // Canvas Setup
 // ============================================================
 function resizeCanvases() {
-  const w = window.innerWidth, h = window.innerHeight;
-  [starfield, fireworksCanvas].forEach(c => { c.width = w; c.height = h; });
-  ribbonsCanvas.width = Math.floor(w * 0.5);
-  ribbonsCanvas.height = Math.floor(h * 0.5);
+  logicalW = window.innerWidth;
+  logicalH = window.innerHeight;
+
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+  // Full-res canvases (starfield, fireworks) — scale by dpr for retina crispness
+  [starfield, fireworksCanvas].forEach(c => {
+    c.width = Math.floor(logicalW * dpr);
+    c.height = Math.floor(logicalH * dpr);
+  });
+  starCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  fireworksCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  // Half-res canvases (ribbons, trail) — 0.5× resolution for performance
+  const hdpr = 0.5 * dpr;
+  ribbonsCanvas.width = Math.floor(logicalW * hdpr);
+  ribbonsCanvas.height = Math.floor(logicalH * hdpr);
+  ribbonsCtx.setTransform(hdpr, 0, 0, hdpr, 0, 0);
+
   if (!trailCanvas) { trailCanvas = document.createElement('canvas'); trailCtx = trailCanvas.getContext('2d'); }
-  trailCanvas.width = Math.floor(w * 0.5);
-  trailCanvas.height = Math.floor(h * 0.5);
+  trailCanvas.width = Math.floor(logicalW * hdpr);
+  trailCanvas.height = Math.floor(logicalH * hdpr);
+  trailCtx.setTransform(hdpr, 0, 0, hdpr, 0, 0);
 }
 
 // ============================================================
@@ -75,10 +96,12 @@ function resizeCanvases() {
 // ============================================================
 function createStars() {
   stars = [];
-  for (let i = 0; i < 200; i++) {
+  const sc = isMobile() ? 100 : 200;
+  const hc = isMobile() ? 8 : 15;
+  for (let i = 0; i < sc; i++) {
     const r = Math.random();
     stars.push({
-      x: Math.random()*starfield.width, y: Math.random()*starfield.height,
+      x: Math.random()*logicalW, y: Math.random()*logicalH,
       radius: Math.random()*1.8+0.3,
       color: r<0.7?'255,255,255':r<0.9?'170,200,255':'255,220,170',
       baseOpacity: Math.random()*0.55+0.3,
@@ -86,10 +109,10 @@ function createStars() {
       parallax: Math.random()*0.3+0.08,
     });
   }
-  for (let i = 0; i < 15; i++) {
+  for (let i = 0; i < hc; i++) {
     const r = Math.random();
     stars.push({
-      x: Math.random()*starfield.width, y: Math.random()*starfield.height,
+      x: Math.random()*logicalW, y: Math.random()*logicalH,
       radius: Math.random()*2.8+1.8,
       color: r<0.6?'200,180,255':r<0.85?'255,210,160':'160,200,255',
       baseOpacity: Math.random()*0.4+0.35,
@@ -102,15 +125,15 @@ function createStars() {
 function spawnShootingStar() {
   const fl = Math.random()>0.5;
   shootingStars.push({
-    x: fl?-50:starfield.width+50, y: Math.random()*starfield.height*0.6,
-    dx: fl?starfield.width*0.7+Math.random()*400:-(starfield.width*0.7),
-    dy: starfield.height*0.3+Math.random()*300,
+    x: fl?-50:logicalW+50, y: Math.random()*logicalH*0.6,
+    dx: fl?logicalW*0.7+Math.random()*400:-(logicalW*0.7),
+    dy: logicalH*0.3+Math.random()*300,
     life:1, decay:Math.random()*0.015+0.008, width:Math.random()*1.5+0.8,
   });
 }
 
 function drawStarfield(sy) {
-  const ctx = starCtx, w = starfield.width, h = starfield.height;
+  const ctx = starCtx, w = logicalW, h = logicalH;
   ctx.clearRect(0,0,w,h);
   const now = performance.now()*0.001, sy2 = sy*0.5;
   for (const s of stars) {
@@ -141,16 +164,17 @@ function drawStarfield(sy) {
 // ============================================================
 function createRibbons() {
   ribbons=[];
-  const w=ribbonsCanvas.width, h=ribbonsCanvas.height;
+  const w=logicalW, h=logicalH;
   const cols=[['rgba(240,210,100,','rgba(212,160,138,'],['rgba(200,180,220,','rgba(160,200,240,'],['rgba(255,220,180,','rgba(240,180,150,'],['rgba(180,210,240,','rgba(140,180,220,']];
-  for(let i=0;i<4;i++){
+  const rc = isMobile() ? 2 : 4;
+  for (let i = 0; i < rc; i++) {
     ribbons.push({points:[],numPoints:6,amplitude:Math.random()*50+35,frequency:Math.random()*0.008+0.004,speed:Math.random()*0.0004+0.0002,phase:Math.random()*Math.PI*2,yBase:h*(0.2+i*0.14),width:Math.random()*2.5+1.5,colors:cols[i],opacity:Math.random()*0.15+0.08,swayAmp:Math.random()*30+15});
     for(let j=0;j<ribbons[i].numPoints;j++) ribbons[i].points.push({x:(w/(ribbons[i].numPoints-1))*j,y:0});
   }
 }
 
 function drawRibbons(time,sy) {
-  const ctx=ribbonsCtx, w=ribbonsCanvas.width, h=ribbonsCanvas.height;
+  const ctx=ribbonsCtx, w=logicalW, h=logicalH;
   ctx.clearRect(0,0,w,h);
   for(const rib of ribbons){
     for(let j=0;j<rib.points.length;j++){
@@ -172,10 +196,11 @@ function drawRibbons(time,sy) {
 // ============================================================
 function createTrailParticles() {
   trailParticles=[];
-  for(let i=0;i<40;i++){
+  const tc = isMobile() ? 20 : 40;
+  for (let i = 0; i < tc; i++) {
     trailParticles.push({
-      x:Math.random()*trailCanvas.width,y:Math.random()*trailCanvas.height*totalScenes,
-      baseX:Math.random()*trailCanvas.width,baseY:Math.random()*trailCanvas.height*totalScenes,
+      x:Math.random()*logicalW,y:Math.random()*logicalH*totalScenes,
+      baseX:Math.random()*logicalW,baseY:Math.random()*logicalH*totalScenes,
       vx:(Math.random()-0.5)*0.3,vy:(Math.random()-0.5)*0.25,
       radius:Math.random()*2.2+0.8,
       color:Math.random()<0.5?'140,180,240':'240,190,140',
@@ -185,7 +210,7 @@ function createTrailParticles() {
 }
 
 function drawTrailParticles(time,sy) {
-  const ctx=trailCtx, w=trailCanvas.width, h=trailCanvas.height;
+  const ctx=trailCtx, w=logicalW, h=logicalH;
   ctx.fillStyle='rgba(4,6,21,0.05)'; ctx.fillRect(0,0,w,h);
   const now=time*0.001, sy2=sy*0.5;
   for(const tp of trailParticles){
@@ -204,7 +229,7 @@ function drawTrailParticles(time,sy) {
   // Stamp onto starfield
   starCtx.save();
   starCtx.globalCompositeOperation='lighter';
-  starCtx.drawImage(trailCanvas,0,0,starfield.width,starfield.height);
+  starCtx.drawImage(trailCanvas,0,0,logicalW,logicalH);
   starCtx.restore();
 }
 
@@ -226,7 +251,7 @@ function createParticleText() {
   const gl=particleTextCacheCtx.createRadialGradient(20,20,0,20,20,18);
   gl.addColorStop(0,'rgba(255,255,255,1)');gl.addColorStop(0.3,'rgba(255,255,255,0.5)');gl.addColorStop(1,'rgba(255,255,255,0)');
   particleTextCacheCtx.fillStyle=gl;particleTextCacheCtx.fillRect(0,0,40,40);
-  const cx=starfield.width/2,cy=starfield.height*1.5;
+  const cx=logicalW/2,cy=logicalH*1.5;
   for(const p of px){
     const a=Math.random()*Math.PI*2,r=200+Math.random()*400;
     particleTextChars.push({tx:p.tx,ty:p.ty,x:cx+Math.cos(a)*r,y:cy+Math.sin(a)*r,cx,cy,size:Math.random()*2+0.8,color:['#FFD700','#E8C4B8','#F0D060','#88ccff','#ffffff','#D4A08A'][Math.floor(Math.random()*6)],speed:Math.random()*0.02+0.008,phase:Math.random()*Math.PI*2});
@@ -236,7 +261,7 @@ function createParticleText() {
 function updateParticleText() {
   if(!particleTextChars.length||!particleTextCache||activeScene!==3)return;
   if(particleTextPhase==='idle')return;
-  const now=performance.now()*0.001,ctx=starCtx,cy=starfield.height*0.5;
+  const now=performance.now()*0.001,ctx=starCtx,cy=logicalH*0.5;
   for(const p of particleTextChars){
     const tx=p.cx+p.tx,ty=cy+p.ty;
     if(particleTextPhase==='converging'){p.x+=(tx-p.x)*p.speed;p.y+=(ty-p.y)*p.speed;}
@@ -265,12 +290,12 @@ class Spark{
   draw(ctx){if(this.life<=0)return;const a=this.life,g=ctx.createRadialGradient(this.x,this.y,0,this.x,this.y,this.size*3);g.addColorStop(0,`rgba(255,255,255,${a})`);g.addColorStop(0.3,this.color.replace(')',`,${a})`).replace('rgb','rgba'));g.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(this.x,this.y,this.size*3,0,Math.PI*2);ctx.fill();}
 }
 class Rocket{
-  constructor(){this.x=Math.random()*fireworksCanvas.width*0.6+fireworksCanvas.width*0.2;this.y=fireworksCanvas.height+20;this.targetY=fireworksCanvas.height*(0.15+Math.random()*0.35);this.vy=-(300+Math.random()*250);this.trail=[];this.alive=true;this.color=['#FFD700','#E8C4B8','#88ccff','#F0D060','#ffffff'][Math.floor(Math.random()*5)];}
+  constructor(){this.x=Math.random()*logicalW*0.6+logicalW*0.2;this.y=logicalH+20;this.targetY=logicalH*(0.15+Math.random()*0.35);this.vy=-(300+Math.random()*250);this.trail=[];this.alive=true;this.color=['#FFD700','#E8C4B8','#88ccff','#F0D060','#ffffff'][Math.floor(Math.random()*5)];}
   update(dt){this.y+=this.vy*dt;this.vy+=15;this.trail.push({x:this.x,y:this.y,life:1});if(this.trail.length>15)this.trail.shift();for(const t of this.trail)t.life-=0.07;if(this.y<=this.targetY){this.alive=false;const c=60+Math.floor(Math.random()*60);for(let i=0;i<c;i++){const a=Math.random()*Math.PI*2,s=Math.random()*250+80;fireworksSparks.push(new Spark(this.x,this.y,Math.cos(a)*s,Math.sin(a)*s,this.color,Math.random()*2.5+1));}}}
   draw(ctx){for(const t of this.trail){if(t.life<=0)continue;ctx.fillStyle=`rgba(255,220,150,${t.life*0.5})`;ctx.beginPath();ctx.arc(t.x,t.y,1.5,0,Math.PI*2);ctx.fill();}const g=ctx.createRadialGradient(this.x,this.y,0,this.x,this.y,8);g.addColorStop(0,'rgba(255,255,255,0.9)');g.addColorStop(0.4,this.color);g.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(this.x,this.y,8,0,Math.PI*2);ctx.fill();}
 }
 function spawnFirework(){fireworksRockets.push(new Rocket());}
-function drawFireworks(dt){const ctx=fireworksCtx;ctx.clearRect(0,0,fireworksCanvas.width,fireworksCanvas.height);ctx.globalCompositeOperation='lighter';for(const r of fireworksRockets)r.update(dt);fireworksRockets=fireworksRockets.filter(r=>r.alive);for(const s of fireworksSparks)s.update(dt);fireworksSparks=fireworksSparks.filter(s=>s.life>0);for(const r of fireworksRockets)r.draw(ctx);for(const s of fireworksSparks)s.draw(ctx);ctx.globalCompositeOperation='source-over';}
+function drawFireworks(dt){const ctx=fireworksCtx;ctx.clearRect(0,0,logicalW,logicalH);ctx.globalCompositeOperation='lighter';for(const r of fireworksRockets)r.update(dt);fireworksRockets=fireworksRockets.filter(r=>r.alive);for(const s of fireworksSparks)s.update(dt);fireworksSparks=fireworksSparks.filter(s=>s.life>0);for(const r of fireworksRockets)r.draw(ctx);for(const s of fireworksSparks)s.draw(ctx);ctx.globalCompositeOperation='source-over';}
 
 // ============================================================
 // Scene Scroll — Fixed Oscillation
@@ -330,7 +355,7 @@ sLeave[2]=()=>{document.getElementById('charTextXia').classList.remove('visible'
 sLeave[3]=()=>{
   particleTextPhase='idle';
   // Reset all particle positions to scattered state so they don't linger
-  const cx=starfield.width/2,cy=starfield.height*1.5;
+  const cx=logicalW/2,cy=logicalH*1.5;
   for(const p of particleTextChars){
     const a=Math.random()*Math.PI*2,r=200+Math.random()*400;
     p.x=cx+Math.cos(a)*r; p.y=cy+Math.sin(a)*r;
@@ -379,8 +404,11 @@ function init3DCard(cId,iId){
   }
   card.addEventListener('mousemove',(e)=>tilt(e.clientX,e.clientY,14));
   card.addEventListener('mouseleave',()=>{inner.classList.add('resting');inner.style.transform='rotateY(0deg) rotateX(0deg) translateZ(0)';if(glare)glare.style.setProperty('--glare-x','50%');});
-  card.addEventListener('touchmove',(e)=>{if(e.touches.length===1)tilt(e.touches[0].clientX,e.touches[0].clientY,9);});
-  card.addEventListener('touchend',()=>{inner.classList.add('resting');inner.style.transform='rotateY(0deg) rotateX(0deg) translateZ(0)';});
+  // Touch tilt only on desktop — mobile uses :active press feedback instead
+  if (!isMobile()) {
+    card.addEventListener('touchmove',(e)=>{if(e.touches.length===1)tilt(e.touches[0].clientX,e.touches[0].clientY,9);});
+    card.addEventListener('touchend',()=>{inner.classList.add('resting');inner.style.transform='rotateY(0deg) rotateX(0deg) translateZ(0)';});
+  }
 }
 
 // ============================================================
@@ -391,15 +419,32 @@ function smoothVol(t){
   function step(){const e=Math.min((performance.now()-st)/DUCK_DURATION,1);bgmAudio.volume=s+(t-s)*(1-Math.pow(1-e,3));if(e<1)duckingAnimFrame=requestAnimationFrame(step);}
   duckingAnimFrame=requestAnimationFrame(step);
 }
-function playVoice(a){
+function playVoice(a,btnEl){
   if(activeVoiceAudio&&activeVoiceAudio!==a){activeVoiceAudio.pause();activeVoiceAudio.currentTime=0;}
-  if(a.paused){a.currentTime=0;a.play().then(()=>{activeVoiceAudio=a;audioMode='voice';smoothVol(BGM_DUCKED);}).catch(()=>{activeVoiceAudio=a;audioMode='voice';});}
-  else{a.pause();activeVoiceAudio=null;audioMode='music';smoothVol(BGM_NORMAL);}
+  // Loading state
+  const icon = btnEl ? btnEl.querySelector('.voice-btn-icon') : null;
+  const label = btnEl ? btnEl.querySelector('.voice-btn-label') : null;
+  if(a.paused){
+    if (a.readyState < 2 && icon) { icon.classList.add('loading'); if (label) label.textContent = '加载中...'; }
+    a.currentTime=0;a.play().then(()=>{
+      if (icon) icon.classList.remove('loading');
+      if (label) label.textContent = '点击暂停';
+      activeVoiceAudio=a;audioMode='voice';smoothVol(BGM_DUCKED);
+    }).catch(()=>{
+      if (icon) icon.classList.remove('loading');
+      if (label) label.textContent = '点击播放祝福';
+    });
+  }
+  else{a.pause();activeVoiceAudio=null;audioMode='music';smoothVol(BGM_NORMAL);if(label)label.textContent='点击播放祝福';}
 }
-function stopVoice(){if(activeVoiceAudio){activeVoiceAudio.pause();activeVoiceAudio.currentTime=0;activeVoiceAudio=null;}audioMode='music';smoothVol(BGM_NORMAL);}
+function stopVoice(){
+  if(activeVoiceAudio){activeVoiceAudio.pause();activeVoiceAudio.currentTime=0;activeVoiceAudio=null;}
+  audioMode='music';smoothVol(BGM_NORMAL);
+  document.querySelectorAll('.voice-btn-label').forEach(el => { el.textContent = '点击播放祝福'; });
+}
 
-document.getElementById('voiceBtnGojo').addEventListener('click',(e)=>{e.stopPropagation();playVoice(audioGojo);addRipple(e.currentTarget.querySelector('.voice-btn-icon'));});
-document.getElementById('voiceBtnXia').addEventListener('click',(e)=>{e.stopPropagation();playVoice(audioXia);addRipple(e.currentTarget.querySelector('.voice-btn-icon'));});
+document.getElementById('voiceBtnGojo').addEventListener('click',(e)=>{e.stopPropagation();playVoice(audioGojo,e.currentTarget);addRipple(e.currentTarget.querySelector('.voice-btn-icon'));});
+document.getElementById('voiceBtnXia').addEventListener('click',(e)=>{e.stopPropagation();playVoice(audioXia,e.currentTarget);addRipple(e.currentTarget.querySelector('.voice-btn-icon'));});
 audioGojo.addEventListener('ended',stopVoice);audioXia.addEventListener('ended',stopVoice);
 audioGojo.addEventListener('pause',()=>{if(activeVoiceAudio===audioGojo&&audioGojo.currentTime>0)stopVoice();});
 audioXia.addEventListener('pause',()=>{if(activeVoiceAudio===audioXia&&audioXia.currentTime>0)stopVoice();});
@@ -448,7 +493,7 @@ const CONFETTI_SHAPES=['rect','ribbon','circle'];
 class ConfettiPiece{
   constructor(){this.reset(true);}
   reset(init){
-    const W=fireworksCanvas.width,H=fireworksCanvas.height;
+    const W=logicalW,H=logicalH;
     this.x=Math.random()*W;
     this.y=init?(Math.random()-0.5)*H*0.5:(-20-Math.random()*80);
     this.vx=(Math.random()-0.5)*200;
@@ -480,7 +525,7 @@ class ConfettiPiece{
     this.wave+=this.waveFreq*dt;
     this.rx+=this.drx*dt; this.ry+=this.dry*dt; this.rz+=this.drz*dt;
     this.life-=this.decay;
-    if(this.y>fireworksCanvas.height+30)this.reset(false);
+    if(this.y>logicalH+30)this.reset(false);
   }
   draw(ctx){
     if(this.life<=0)return;
@@ -511,7 +556,8 @@ let confettiActive=false,confettiTimer=0;
 function triggerFullWishEffect(){
   confettiActive=true;confettiTimer=performance.now();
   confettiPieces=[];
-  for(let i=0;i<180;i++)confettiPieces.push(new ConfettiPiece());
+  const cc = isMobile() ? 80 : 180;
+  for (let i = 0; i < cc; i++) confettiPieces.push(new ConfettiPiece());
   triggerParticleText();
   for(let i=0;i<12;i++)setTimeout(spawnFirework,i*220);
 }
@@ -644,6 +690,25 @@ document.getElementById('endingOverlay').addEventListener('wheel',(e)=>{
   if(e.deltaY>20)nextEnding();
   else if(e.deltaY<-20)prevEnding();
 },{passive:false});
+
+// Ending swipe gestures (mobile)
+let endingTouchStartX = 0, endingTouchStartY = 0;
+document.getElementById('endingOverlay').addEventListener('touchstart', (e) => {
+  endingTouchStartX = e.touches[0].clientX;
+  endingTouchStartY = e.touches[0].clientY;
+}, {passive: true});
+document.getElementById('endingOverlay').addEventListener('touchend', (e) => {
+  if (!endingOpen) return;
+  const dx = endingTouchStartX - e.changedTouches[0].clientX;
+  const dy = endingTouchStartY - e.changedTouches[0].clientY;
+  const absDx = Math.abs(dx), absDy = Math.abs(dy);
+  if (Math.max(absDx, absDy) < 30) return; // too small
+  if (absDx > absDy) {
+    // Horizontal swipe
+    if (dx > 40) nextEnding();
+    else if (dx < -40) prevEnding();
+  }
+});
 document.addEventListener('keydown',(e)=>{
   if(!endingOpen)return;
   if(e.key==='Escape')closeEnding();
@@ -666,9 +731,23 @@ function buildPhotoWall(){
   carouselViewport=document.getElementById('photoCarouselViewport');
   if(!carouselTrack||!carouselViewport)return;
 
-  // Build rows: 2 photos per row, 4 rows = 8 items (7 real + 1 repeated start)
   const srcLen=photoSrcs.length; // 7
-  const extSrcs=[...photoSrcs,...photoSrcs]; // clone for seamless loop
+
+  if (isMobile()) {
+    // Mobile — flat vertical list, no loop, each photo direct child
+    for (let i = 0; i < srcLen; i++) {
+      const item = document.createElement('div');
+      item.className = 'photo-item';
+      item.innerHTML = `<img src="${photoSrcs[i]}" alt="${labels[i]}" loading="lazy" /><div class="photo-item-overlay"><span>${labels[i]}</span></div>`;
+      item.addEventListener('click', () => openLightbox(i));
+      photoItems[i] = item;
+      carouselTrack.appendChild(item);
+    }
+    return;
+  }
+
+  // Desktop — rows of 2 with clone loop
+  const extSrcs=[...photoSrcs,...photoSrcs];
   const extLabels=[...labels,...labels];
 
   // Create rows — items placed 2-per-row (alternating left/right offset via CSS)
@@ -697,9 +776,9 @@ function buildPhotoWall(){
   });
 }
 
-// Smooth carousel animation
+// Smooth carousel animation (desktop only — mobile uses CSS overflow scroll)
 function updateCarousel(){
-  if(!carouselTrack||carouselTotalH===0)return;
+  if(!carouselTrack||carouselTotalH===0||isMobile())return;
   carouselOffset+=(carouselContinuous-carouselOffset)*0.08;
   const display=((carouselOffset%carouselTotalH)+carouselTotalH)%carouselTotalH;
   carouselTrack.style.transform=`translateY(${-display}px)`;
@@ -711,10 +790,18 @@ function openLightbox(idx){
   const overlay=document.getElementById('lightboxOverlay');
   const wrap=document.getElementById('lightboxImageWrap');
   const img=document.getElementById('lightboxImg');
-  const thumb=photoItems[idx];const r=thumb.getBoundingClientRect();
-  wrap.style.top=r.top+'px';wrap.style.left=r.left+'px';wrap.style.width=r.width+'px';wrap.style.height=r.height+'px';wrap.style.borderRadius='var(--radius-md)';
   img.src=photoSrcs[idx];
   img.style.display='';
+
+  if (isMobile()) {
+    // Bottom sheet — CSS handles the slide-up animation
+    overlay.classList.add('open');
+    return;
+  }
+
+  // Desktop — expand from thumbnail position
+  const thumb=photoItems[idx];const r=thumb.getBoundingClientRect();
+  wrap.style.top=r.top+'px';wrap.style.left=r.left+'px';wrap.style.width=r.width+'px';wrap.style.height=r.height+'px';wrap.style.borderRadius='var(--radius-md)';
   overlay.classList.add('open');
   requestAnimationFrame(()=>{
     requestAnimationFrame(()=>{
@@ -730,6 +817,13 @@ function openLightbox(idx){
 function closeLightbox(){
   if(!lightboxOpen)return;
   const overlay=document.getElementById('lightboxOverlay'),wrap=document.getElementById('lightboxImageWrap');
+
+  if (isMobile()) {
+    overlay.classList.remove('open');lightboxOpen=false;
+    setTimeout(()=>{const lb=document.getElementById('lightboxImg');lb.removeAttribute('src');lb.style.display='none';},400);
+    return;
+  }
+
   const thumb=photoItems[lightboxIdx];const r=thumb.getBoundingClientRect();
   wrap.style.top=r.top+'px';wrap.style.left=r.left+'px';wrap.style.width=r.width+'px';wrap.style.height=r.height+'px';wrap.style.borderRadius='var(--radius-md)';
   overlay.classList.remove('open');lightboxOpen=false;
@@ -786,13 +880,13 @@ musicVolBtn.addEventListener('click',(e)=>{
   const vols=[0,0.2,0.45,0.7];
   const ci=vols.findIndex(v=>Math.abs(v-bgmAudio.volume)<0.04);
   const ni=(ci+1)%vols.length;
-  bgmAudio.volume=vols[ni];smoothVol(vols[ni]);
+  bgmAudio.volume=vols[ni];smoothVol(vols[ni]);saveVolume();
   updateMusicUI();
 });
 musicVolBtn.addEventListener('wheel',(e)=>{
   e.stopPropagation();e.preventDefault();
   const v=Math.max(0,Math.min(1,bgmAudio.volume-(e.deltaY>0?0.06:-0.06)));
-  bgmAudio.volume=v;smoothVol(v);
+  bgmAudio.volume=v;smoothVol(v);saveVolume();
   updateMusicUI();
 },{passive:false});
 
@@ -814,9 +908,19 @@ function spawnMusicNotes(){
 
 // ============================================================
 // BGM Init
+// Volume persistence
+const VOL_KEY = 'birthday_bgm_vol';
+function saveVolume() {
+  try { localStorage.setItem(VOL_KEY, bgmAudio.volume); } catch(e) {}
+}
+function loadVolume() {
+  try { const v = localStorage.getItem(VOL_KEY); return v !== null ? parseFloat(v) : BGM_NORMAL; } catch(e) { return BGM_NORMAL; }
+}
+
 // ============================================================
 function initBGM(){
-  initAudioCtx();bgmAudio.volume=BGM_NORMAL;
+  initAudioCtx();
+  bgmAudio.volume = loadVolume();
   bgmAudio.play().then(()=>{bgmPlaying=true;updateMusicUI();}).catch(()=>{bgmPlaying=false;updateMusicUI();});
 }
 let bgmTried=false;
@@ -861,9 +965,35 @@ function init(){
   resizeCanvases();createStars();createRibbons();createTrailParticles();createParticleText();
   buildPhotoWall();init3DCard('cardGojo','cardGojoInner');init3DCard('cardXia','cardXiaInner');
   triggerScene1();updateMusicUI();
+  // Hide loading screen
+  const ls = document.getElementById('loadingScreen');
+  if (ls) { ls.classList.add('hidden'); setTimeout(() => ls.remove(), 600); }
   animFrameId=requestAnimationFrame(animate);
 }
-let rd;window.addEventListener('resize',()=>{clearTimeout(rd);rd=setTimeout(()=>{resizeCanvases();createStars();createRibbons();createTrailParticles();createParticleText();targetY=currentScene*vh();},400);});
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  const newW = window.innerWidth;
+  resizeTimer = setTimeout(() => {
+    if (newW !== logicalW) {
+      // Width changed (orientation) — full rebuild
+      resizeCanvases();
+      createStars();
+      createRibbons();
+      createTrailParticles();
+      createParticleText();
+    }
+    // Always update scroll target (address bar may have changed height)
+    targetY = currentScene * vh();
+  }, 800);
+});
+
+// visualViewport fires on mobile address bar show/hide — no canvas rebuild needed
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', () => {
+    targetY = currentScene * vh();
+  });
+}
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(bgmPlaying)bgmAudio.pause();}else{if(bgmPlaying)bgmAudio.play().catch(()=>{});}});
 init();
 

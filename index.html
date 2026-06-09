@@ -2,12 +2,32 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover" />
   <title>李馨姐 · 生日快乐 — 星空花语</title>
   <meta name="description" content="专为李馨制作的生日祝福页 — 星空为幕，花语为诗，这一刻为你绽放。" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="李馨姐 · 生日快乐 — 星空花语" />
+  <meta property="og:description" content="专为李馨制作的生日祝福页 — 星空为幕，花语为诗，这一刻为你绽放。" />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="zh_CN" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <!-- Fonts: preconnect + preload for faster rendering -->
+  <link rel="preconnect" href="https://fonts.font.im" crossorigin />
+  <link rel="preload" as="style" href="https://fonts.font.im/css2?family=Noto+Sans+SC:wght@300;400;500&family=Noto+Serif+SC:wght@400;600;700;900&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" />
+  <link rel="stylesheet" href="https://fonts.font.im/css2?family=Noto+Sans+SC:wght@300;400;500&family=Noto+Serif+SC:wght@400;600;700;900&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" media="print" onload="this.media='all'" />
+  <noscript><link rel="stylesheet" href="https://fonts.font.im/css2?family=Noto+Sans+SC:wght@300;400;500&family=Noto+Serif+SC:wght@400;600;700;900&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" /></noscript>
+
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
+
+  <!-- Canvas loading indicator -->
+  <div class="loading-screen" id="loadingScreen">
+    <div class="loading-spinner"></div>
+    <p class="loading-text">星空加载中...</p>
+  </div>
 
   <canvas id="starfield"></canvas>
   <canvas id="ribbons-canvas"></canvas>
@@ -188,9 +208,9 @@
     </div>
   </div>
 
-  <audio id="bgmAudio" src="素材/bgm.mp3" loop preload="auto" data-audio-type="bgm"></audio>
-  <audio id="audioXia" src="素材/夏以昼.mp3" preload="auto" data-audio-type="voice"></audio>
-  <audio id="audioGojo" src="素材/五条悟.mp3" preload="auto" data-audio-type="voice"></audio>
+  <audio id="bgmAudio" src="素材/bgm.mp3" loop preload="metadata" data-audio-type="bgm"></audio>
+  <audio id="audioXia" src="素材/夏以昼.mp3" preload="metadata" data-audio-type="voice"></audio>
+  <audio id="audioGojo" src="素材/五条悟.mp3" preload="metadata" data-audio-type="voice"></audio>
 
   <script src="js/main.js"></script>
 </body>
