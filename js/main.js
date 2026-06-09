@@ -306,6 +306,13 @@ window.addEventListener('keydown',(e)=>{
   else if(e.key==='Escape'&&lightboxOpen)closeLightbox();
 });
 
+// Click to advance scene (not on buttons, cards, photo wall, or music)
+scenesWrapper.addEventListener('click',(e)=>{
+  if(endingOpen||lightboxOpen||isScrolling)return;
+  if(e.target.closest('button')||e.target.closest('.card-3d')||e.target.closest('.photo-item')||e.target.closest('.music-panel'))return;
+  if(currentScene<totalScenes-1){scrollToScene(currentScene+1);setScrollLock();}
+});
+
 window.addEventListener('mousemove',(e)=>{mouseX=e.clientX;mouseY=e.clientY;});
 window.addEventListener('touchmove',(e)=>{if(e.touches.length===1){mouseX=e.touches[0].clientX;mouseY=e.touches[0].clientY;}},{passive:true});
 
@@ -403,7 +410,8 @@ audioXia.addEventListener('pause',()=>{if(activeVoiceAudio===audioXia&&audioXia.
 function initAudioCtx(){
   if(audioCtx)return;
   try{
-    audioCtx=new(window.AudioContext||window.webkitAudioContext)();analyser=audioCtx.createAnalyser();
+    audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();
+    analyser=audioCtx.createAnalyser();
     analyser.fftSize=1024;analyser.smoothingTimeConstant=0.6;analyser.minDecibels=-80;analyser.maxDecibels=-10;
     const src=audioCtx.createMediaElementSource(bgmAudio);src.connect(analyser);analyser.connect(audioCtx.destination);
     freqData=new Uint8Array(analyser.frequencyBinCount);prevFreqData=new Uint8Array(analyser.frequencyBinCount);
@@ -813,7 +821,7 @@ function initBGM(){
 }
 let bgmTried=false;
 function tryBGM(){if(!bgmTried){bgmTried=true;initBGM();}}
-document.addEventListener('click',tryBGM,{once:true});document.addEventListener('touchstart',tryBGM,{once:true});document.addEventListener('wheel',tryBGM,{once:true});
+document.addEventListener('click',tryBGM,{once:true});
 
 // ============================================================
 // Main Loop
@@ -854,7 +862,6 @@ function init(){
   buildPhotoWall();init3DCard('cardGojo','cardGojoInner');init3DCard('cardXia','cardXiaInner');
   triggerScene1();updateMusicUI();
   animFrameId=requestAnimationFrame(animate);
-  setTimeout(()=>initBGM(),600);
 }
 let rd;window.addEventListener('resize',()=>{clearTimeout(rd);rd=setTimeout(()=>{resizeCanvases();createStars();createRibbons();createTrailParticles();createParticleText();targetY=currentScene*vh();},400);});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(bgmPlaying)bgmAudio.pause();}else{if(bgmPlaying)bgmAudio.play().catch(()=>{});}});
