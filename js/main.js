@@ -535,15 +535,40 @@ wishBtn.addEventListener('click',()=>{addRipple(wishRing);openEnding();triggerFu
 const endingSrcs=['素材/ending-1.png','素材/ending-2.png','素材/ending-3.png'];
 const endingTypewriterText='福如东海，寿比南山~~';
 let endingIdx=0,endingOpen=false,endingOnTypewriter=false,typewriterTimer=null;
+let endingCurImg=null,endingNextImg=null;
+
+function endingSwapDom(){endingCurImg=document.getElementById('endingImg');endingNextImg=document.getElementById('endingImgNext');}
+function endingCrossfade(newSrc,cb){
+  if(!endingCurImg||!endingNextImg)endingSwapDom();
+  const preload=new Image();
+  preload.onload=()=>{
+    endingNextImg.src=newSrc;
+    endingCurImg.classList.add('fade-out');
+    endingNextImg.style.opacity='1';
+    setTimeout(()=>{
+      // Swap roles
+      const tmp=endingCurImg;endingCurImg=endingNextImg;endingNextImg=tmp;
+      endingCurImg.className='ending-img ending-img-current';
+      endingNextImg.className='ending-img ending-img-next';
+      endingNextImg.style.opacity='0';
+      if(cb)cb();
+    },450);
+  };
+  preload.src=newSrc;
+}
 
 function openEnding(){
   if(endingOpen)return;
   endingOpen=true;endingIdx=0;endingOnTypewriter=false;
   const overlay=document.getElementById('endingOverlay');
   const img=document.getElementById('endingImg');
+  const next=document.getElementById('endingImgNext');
   const tw=document.getElementById('endingTypewriter');
   const stage=document.getElementById('endingStage');
-  img.src=endingSrcs[0];img.style.display='';img.classList.remove('switching','hidden');
+  endingCurImg=img;endingNextImg=next;
+  endingCurImg.className='ending-img ending-img-current';endingCurImg.style.display='';endingCurImg.style.opacity='1';
+  endingNextImg.className='ending-img ending-img-next';endingNextImg.style.display='';endingNextImg.style.opacity='0';
+  endingCurImg.src=endingSrcs[0];endingNextImg.src='';
   tw.innerHTML='';tw.classList.remove('done','active');
   stage.classList.remove('has-typewriter');
   overlay.classList.add('open');
@@ -554,23 +579,19 @@ function closeEnding(){
   clearTimeout(typewriterTimer);
   document.getElementById('endingOverlay').classList.remove('open');
   setTimeout(()=>{
-    const img=document.getElementById('endingImg');
+    const img=document.getElementById('endingImg'),next=document.getElementById('endingImgNext');
+    img.style.display='none';next.style.display='none';img.classList.remove('hidden','fade-out');next.classList.remove('hidden','fade-out');
+    img.style.opacity='1';next.style.opacity='0';
     const tw=document.getElementById('endingTypewriter');
-    img.style.display='none';img.classList.remove('hidden');
     tw.innerHTML='';tw.classList.remove('active','done');
     document.getElementById('endingStage').classList.remove('has-typewriter');
   },600);
 }
 function nextEnding(){
-  if(!endingOpen)return;
-  if(endingOnTypewriter)return;
+  if(!endingOpen||endingOnTypewriter)return;
   if(endingIdx>=endingSrcs.length-1){showTypewriterScreen();return;}
   endingIdx++;
-  const img=document.getElementById('endingImg');
-  img.classList.add('switching');
-  setTimeout(()=>{
-    img.src=endingSrcs[endingIdx];img.classList.remove('switching');
-  },300);
+  endingCrossfade(endingSrcs[endingIdx]);
 }
 function prevEnding(){
   if(!endingOpen)return;
@@ -581,19 +602,13 @@ function prevEnding(){
   const tw=document.getElementById('endingTypewriter');
   tw.innerHTML='';tw.classList.remove('done','active');
   document.getElementById('endingStage').classList.remove('has-typewriter');
-  document.getElementById('endingImg').classList.remove('hidden');
-  const img=document.getElementById('endingImg');
-  img.classList.add('switching');
-  setTimeout(()=>{
-    img.src=endingSrcs[endingIdx];img.classList.remove('switching');
-  },300);
+  endingCrossfade(endingSrcs[endingIdx]);
 }
 function showTypewriterScreen(){
   endingOnTypewriter=true;
-  const img=document.getElementById('endingImg');
-  const stage=document.getElementById('endingStage');
-  img.classList.add('hidden');
-  stage.classList.add('has-typewriter');
+  endingCurImg.classList.add('hidden');
+  endingNextImg.classList.add('hidden');
+  document.getElementById('endingStage').classList.add('has-typewriter');
   startTypewriter();
 }
 function hideTypewriterScreen(){
@@ -602,7 +617,8 @@ function hideTypewriterScreen(){
   const tw=document.getElementById('endingTypewriter');
   tw.innerHTML='';tw.classList.remove('done','active');
   document.getElementById('endingStage').classList.remove('has-typewriter');
-  document.getElementById('endingImg').classList.remove('hidden');
+  endingCurImg.classList.remove('hidden');
+  endingNextImg.classList.remove('hidden');
 }
 function startTypewriter(){
   const tw=document.getElementById('endingTypewriter');
