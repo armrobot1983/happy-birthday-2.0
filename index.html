@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>李馨姐 · 生日快乐 — 星空花语</title>
+  <meta name="description" content="专为李馨制作的生日祝福页 — 星空为幕，花语为诗，这一刻为你绽放。" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <canvas id="starfield"></canvas>
+  <canvas id="ribbons-canvas"></canvas>
+  <canvas id="fireworks-canvas"></canvas>
+
+  <div class="scenes-wrapper" id="scenesWrapper">
+
+    <!-- Scene 1: Starry Opening -->
+    <section class="scene" id="scene1">
+      <div class="scene-bg"></div>
+      <div class="god-rays">
+        <div class="god-ray"></div><div class="god-ray"></div><div class="god-ray"></div>
+        <div class="god-ray"></div><div class="god-ray"></div>
+      </div>
+      <div id="petalsContainer"></div>
+      <div class="scene-orb" style="width:160px;height:160px;top:8%;left:12%;background:radial-gradient(circle,rgba(200,160,220,0.30),transparent 70%);"></div>
+      <div class="scene-orb" style="width:100px;height:100px;bottom:22%;right:10%;background:radial-gradient(circle,rgba(240,200,120,0.25),transparent 70%);"></div>
+      <div class="scene-orb" style="width:80px;height:80px;top:60%;right:25%;background:radial-gradient(circle,rgba(180,140,200,0.28),transparent 70%);"></div>
+      <div class="scene1-content">
+        <h1 class="scene1-title">
+          <span class="char shimmer-text" style="transition-delay: 0s">李</span><span class="char shimmer-text" style="transition-delay: 0.1s">馨</span><span class="char shimmer-text" style="transition-delay: 0.2s">姐</span><span class="char shimmer-text" style="transition-delay: 0.3s">，</span><span class="char shimmer-text" style="transition-delay: 0.4s">生</span><span class="char shimmer-text" style="transition-delay: 0.5s">日</span><span class="char shimmer-text" style="transition-delay: 0.6s">快</span><span class="char shimmer-text" style="transition-delay: 0.7s">乐</span><span class="char shimmer-text" style="transition-delay: 0.8s">！！</span>
+        </h1>
+        <p class="scene1-subtitle" id="subtitleEl">穿越星海，赴一场花雨之约</p>
+      </div>
+      <div class="scroll-hint" id="scrollHint">
+        <div class="scroll-hint-line"></div>
+        <span class="scroll-hint-text">向下滚动</span>
+      </div>
+    </section>
+
+    <!-- Scene 2: 五条悟 -->
+    <section class="scene" id="scene2">
+      <div class="scene-bg"></div>
+      <div class="scene-orb" style="width:180px;height:180px;top:12%;right:18%;background:radial-gradient(circle,rgba(100,150,240,0.35),transparent 70%);"></div>
+      <div class="scene-orb" style="width:120px;height:120px;bottom:15%;left:8%;background:radial-gradient(circle,rgba(140,180,250,0.3),transparent 70%);"></div>
+      <div class="scene-orb" style="width:90px;height:90px;top:50%;left:58%;background:radial-gradient(circle,rgba(80,130,220,0.28),transparent 70%);"></div>
+      <div class="character-scene-inner">
+        <div class="card-3d" id="cardGojo">
+          <div class="card-3d-inner" id="cardGojoInner">
+            <div class="card-glow"></div>
+            <div class="card-face">
+              <div class="card-glare"></div>
+              <img class="card-img" src="素材/五条悟.png" alt="五条悟" />
+              <div class="card-overlay"></div>
+              <div class="voice-btn" id="voiceBtnGojo" data-audio="gojo">
+                <div class="voice-btn-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3" /></svg>
+                </div>
+                <span class="voice-btn-label">点击播放祝福</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="character-text" id="charTextGojo">
+          <div>
+            <h2 class="character-name shimmer-text">五条悟</h2>
+            <p class="character-name-en">Satoru Gojo</p>
+          </div>
+          <div class="character-quote">
+            <p>在这无限的世界里，<br/>今天只为你展开领域——<br/>
+              <span class="highlight">——李馨、お誕生日おめでとう。</span></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Scene 3: 夏以昼 -->
+    <section class="scene" id="scene3">
+      <div class="scene-bg"></div>
+      <div class="scene-orb" style="width:170px;height:170px;top:10%;left:15%;background:radial-gradient(circle,rgba(240,170,60,0.32),transparent 70%);"></div>
+      <div class="scene-orb" style="width:130px;height:130px;bottom:20%;right:12%;background:radial-gradient(circle,rgba(220,140,40,0.28),transparent 70%);"></div>
+      <div class="scene-orb" style="width:85px;height:85px;top:55%;right:30%;background:radial-gradient(circle,rgba(200,120,50,0.25),transparent 70%);"></div>
+      <div class="character-scene-inner">
+        <div class="card-3d" id="cardXia">
+          <div class="card-3d-inner" id="cardXiaInner">
+            <div class="card-glow"></div>
+            <div class="card-face">
+              <div class="card-glare"></div>
+              <img class="card-img" src="素材/夏以昼.png" alt="夏以昼" />
+              <div class="card-overlay"></div>
+              <div class="voice-btn" id="voiceBtnXia" data-audio="xia">
+                <div class="voice-btn-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3" /></svg>
+                </div>
+                <span class="voice-btn-label">点击播放祝福</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="character-text" id="charTextXia">
+          <div>
+            <h2 class="character-name shimmer-text">夏以昼</h2>
+            <p class="character-name-en">Xia Yizhou</p>
+          </div>
+          <div class="character-quote">
+            <p>星辰指引我，穿越深空来到你身边——<br/>
+              <span class="highlight">——李馨、生日快乐。</span></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Scene 4: Grand Finale -->
+    <section class="scene" id="scene4">
+      <div class="scene-bg"></div>
+      <div class="scene-orb" style="width:150px;height:150px;top:15%;right:20%;background:radial-gradient(circle,rgba(200,160,220,0.3),transparent 70%);"></div>
+      <div class="scene-orb" style="width:100px;height:100px;bottom:25%;left:10%;background:radial-gradient(circle,rgba(240,180,100,0.25),transparent 70%);"></div>
+      <div class="scene-orb" style="width:75px;height:75px;top:70%;right:55%;background:radial-gradient(circle,rgba(160,120,200,0.28),transparent 70%);"></div>
+      <div class="scene4-inner">
+        <div class="scene4-left">
+          <div class="scene4-title-wrap">
+            <div class="scene4-glow-orb"></div>
+            <h1 class="scene4-title shimmer-text">Happy<br/>Birthday</h1>
+          </div>
+          <p class="scene4-name">李 馨</p>
+          <p class="scene4-tagline">星空交汇，奇迹为你降临</p>
+          <button class="wish-btn" id="wishBtn">
+            <div class="wish-btn-ring" id="wishRing">
+              <span class="wish-btn-star">&#10024;</span>
+            </div>
+            <span class="wish-btn-label">点击许愿</span>
+          </button>
+        </div>
+        <div class="scene4-right" id="photoWallScroll">
+          <h3 class="photo-wall-title">专属回忆</h3>
+          <div class="photo-carousel-viewport" id="photoCarouselViewport">
+            <div class="photo-carousel-track" id="photoCarouselTrack"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Photo Lightbox -->
+  <div class="lightbox-overlay" id="lightboxOverlay">
+    <div class="lightbox-image-wrap" id="lightboxImageWrap">
+      <img id="lightboxImg" alt="" style="display:none" />
+    </div>
+    <button class="lightbox-close" id="lightboxClose">&times;</button>
+    <button class="lightbox-prev" id="lightboxPrev">&lsaquo;</button>
+    <button class="lightbox-next" id="lightboxNext">&rsaquo;</button>
+  </div>
+
+  <!-- Ending Overlay -->
+  <div class="ending-overlay" id="endingOverlay">
+    <button class="ending-back" id="endingBack" aria-label="返回">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div class="ending-stage" id="endingStage">
+      <img class="ending-img" id="endingImg" alt="" style="display:none" />
+      <div class="ending-typewriter" id="endingTypewriter"></div>
+    </div>
+  </div>
+
+  <!-- Music Panel -->
+  <div class="music-panel" id="musicPanel">
+    <button class="music-toggle" id="musicToggle" aria-label="音乐控制">
+      <div class="music-disc-ring"></div>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" />
+      </svg>
+    </button>
+    <div class="music-controls">
+      <button class="music-play-btn" id="musicPlayBtn">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+      </button>
+      <div class="music-progress">
+        <div class="music-progress-fill" id="musicProgressFill"></div>
+      </div>
+      <button class="music-vol-btn" id="musicVolBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+          <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <audio id="bgmAudio" src="素材/bgm.mp3" loop preload="auto" data-audio-type="bgm" crossorigin="anonymous"></audio>
+  <audio id="audioXia" src="素材/夏以昼.mp3" preload="auto" data-audio-type="voice" crossorigin="anonymous"></audio>
+  <audio id="audioGojo" src="素材/五条悟.mp3" preload="auto" data-audio-type="voice" crossorigin="anonymous"></audio>
+
+  <script src="js/main.js"></script>
+</body>
+</html>
